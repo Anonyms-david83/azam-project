@@ -12,7 +12,7 @@ def start_app():
         case '2':
             signup()
         case '3':
-           exit()
+           app_exit()
 
 ##############################[authentication functions]##################################
 
@@ -22,9 +22,8 @@ def signup():
 def login():
     pass
 
-def exit():
+def app_exit():
     exit()
 
 #############################
 
-start_app()
