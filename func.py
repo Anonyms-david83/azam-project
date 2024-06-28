@@ -137,6 +137,10 @@ def admin_login():
         else:
             print("Invalid username or password or not an admin. Please try again or type 'exit' to quit.")
 
+def logout_user():
+    print("Logging out...")
+    start_app()
+
 def show_menu(user):
     while True:
         print("\nMenu:")
@@ -146,7 +150,7 @@ def show_menu(user):
         print("4) View Posts of Others")
         print("5) View Previous Messages")
         print("6) View Previous Posts")
-        print("7) Exit")
+        print("7) Logout")
 
         choice = input("Enter your choice: ")
 
@@ -164,8 +168,8 @@ def show_menu(user):
             case '6':
                 view_previous_posts(user)
             case '7':
-                print("Exiting...")
-                exit()
+                logout_user()
+                return
             case _:
                 print("Invalid choice. Please try again.")
 
@@ -176,7 +180,7 @@ def show_admin_menu(user):
         print("2) View All Posts")
         print("3) Delete Post")
         print("4) View Friend Requests")
-        print("5) Exit")
+        print("5) Logout")
 
         choice = input("Enter your choice: ")
 
@@ -190,8 +194,8 @@ def show_admin_menu(user):
             case '4':
                 view_friend_requests()
             case '5':
-                print("Exiting...")
-                exit()
+                logout_user()
+                return
             case _:
                 print("Invalid choice. Please try again.")
 
@@ -228,68 +232,44 @@ def send_friend_request(user):
         print(f"ID: {user_tuple[0]}, Username: {user_tuple[6]}")  # Assuming ID is at index 0 and username at index 6
 
     friend_username = input("Enter username to send friend request: ")
-    if User.send_friend_request(user.username, friend_username):
-        print(f"Friend request sent to {friend_username}.")
+    friend_user = User.get_user_by_username(friend_username)
+    if friend_user:
+        user.send_friend_request(friend_user[0])  # Assuming user ID is at index 0
+        print("Friend request sent!")
     else:
-        print(f"User {friend_username} not found or already a friend.")
+        print("User not found.")
 
 def send_message(user):
     print("Send Message")
-    receiver_username = input("Enter the username of the person you want to send a message to: ")
-    message = input("Enter your message: ")
-
-    if user.send_message(receiver_username, message):
-        print(f"Message sent to {receiver_username}.")
+    recipient_username = input("Enter recipient's username: ")
+    recipient_user = User.get_user_by_username(recipient_username)
+    if recipient_user:
+        message = input("Enter your message: ")
+        user.send_message(recipient_user[0], message)  # Assuming user ID is at index 0
+        print("Message sent!")
     else:
-        print(f"Failed to send message. Make sure {receiver_username} is in your friend list and the username is correct.")
+        print("User not found.")
 
 def create_post(user):
     print("Create New Post")
     content = input("Enter your post content: ")
     user.create_post(content)
-    print("Post created successfully.")
+    print("Post created!")
 
 def view_posts_of_others(user):
     print("View Posts of Others")
-    friends = user.get_friends()
-    print("Your friends:")
-    for friend in friends:
-        print(friend[0])
+    posts = User.get_all_posts()
+    for post in posts:
+        print(f"User ID: {post[1]}, Content: {post[2]}, Timestamp: {post[3]}")
 
-    friend_username = input("Enter the username of the friend whose posts you want to view: ")
-    friend = User.get_by_username(friend_username)
-
-    if friend:
-        posts = friend.get_posts()
-        for post in posts:
-            print(f"{post[1]}: {post[0]}")
-    else:
-        print(f"User {friend_username} not found.")
+def view_previous_messages(user):
+    print("View Previous Messages")
+    messages = user.get_messages()
+    for message in messages:
+        print(f"From: {message[1]}, To: {message[2]}, Content: {message[3]}, Timestamp: {message[4]}")
 
 def view_previous_posts(user):
     print("View Previous Posts")
     posts = user.get_posts()
-    if not posts:
-        print("No posts found.")
-    else:
-        for post in posts:
-            print(f"ID: {post[0]}, Content: {post[1]}, Date: {post[2]}")
-
-def view_previous_messages(user):
-    print("View Previous Messages")
-    received_messages = user.get_received_messages()
-    sent_messages = user.get_sent_messages()
-
-    print("Received Messages:")
-    if not received_messages:
-        print("No received messages found.")
-    else:
-        for message in received_messages:
-            print(f"ID: {message[0]}, From: {message[3]}, Date: {message[2]}, Content: {message[1]}")
-
-    print("\nSent Messages:")
-    if not sent_messages:
-        print("No sent messages found.")
-    else:
-        for message in sent_messages:
-            print(f"ID: {message[0]}, To: {message[3]}, Date: {message[2]}, Content: {message[1]}")
+    for post in posts:
+        print(f"Content: {post[2]}, Timestamp: {post[3]}")
