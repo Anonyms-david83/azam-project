@@ -1,12 +1,11 @@
-from art import *
-from cls import Date
-from cls import User
+from art import text2art
+from cls import Date, User
 
 ##############################[initializing fuctions]##################################
 def start_app():
-    art1 = text2art("Welcome", font='block',chr_ignore=True)
+    art1 = text2art("Welcome", font='block', chr_ignore=True)
     print(art1)
-    choose = input("Choose Your Login Method ... \n 1)Login \n 2)Signup \n 3)Exit \n ==>")
+    choose = input("Choose Your Login Method ... \n 1)Login \n 2)Signup \n 3)Admin Login \n 4)Admin Signup \n 5)Exit \n ==>")
 
     match choose:
         case '1':
@@ -14,15 +13,17 @@ def start_app():
         case '2':
             register_user()
         case '3':
-           app_exit()
+            admin_login()
+        case '4':
+            register_admin()
+        case '5':
+            app_exit()
 
 ##############################[authentication functions]##################################
 
 def app_exit():
     exit()
 
-
-# Registration function
 def register_user():
     print("Registration Form")
     first_name = input("First Name: ")
@@ -44,7 +45,7 @@ def register_user():
 
     while True:
         username = input("Username: ")
-        if not User.get_by_username(username):
+        if not User.is_username_taken(username):
             break
         else:
             print("Username is already taken. Please choose another one.")
@@ -56,8 +57,44 @@ def register_user():
     print("Registration successful! Redirecting to login...")
     login_user()
 
+def register_admin():
+    print("Admin Registration Form")
+    referral_code = input("Enter referral code: ")
+    if referral_code != "farokhadmin":
+        print("Invalid referral code. Access denied.")
+        return
 
-# Login function
+    first_name = input("First Name: ")
+    last_name = input("Last Name: ")
+
+    while True:
+        year = int(input("Birth Year: "))
+        month = int(input("Birth Month: "))
+        day = int(input("Birth Day: "))
+        birth_date = Date(year, month, day)
+        if birth_date.is_valid():
+            birth_date_str = f"{year}-{month:02d}-{day:02d}"
+            break
+        else:
+            print("Invalid date. Please enter again.")
+
+    gender = input("Gender: ")
+    city = input("City: ")
+
+    while True:
+        username = input("Username: ")
+        if not User.is_username_taken(username):
+            break
+        else:
+            print("Username is already taken. Please choose another one.")
+
+    password = input("Password: ")
+
+    new_admin = User(None, first_name, last_name, birth_date_str, gender, city, username, password, role='admin')
+    new_admin.save_to_db()
+    print("Admin registration successful! Redirecting to login...")
+    admin_login()
+
 def login_user():
     while True:
         print("Login (type 'exit' to quit)")
@@ -79,8 +116,27 @@ def login_user():
         else:
             print("Invalid username or password. Please try again or type 'exit' to quit.")
 
+def admin_login():
+    while True:
+        print("Admin Login (type 'exit' to quit)")
+        username = input("Username: ")
+        if username.lower() == 'exit':
+            print("Exiting login...")
+            return
 
-# Menu function
+        password = input("Password: ")
+        if password.lower() == 'exit':
+            print("Exiting login...")
+            return
+
+        user = User.authenticate(username, password)
+        if user and user.role == 'admin':
+            print("Admin login successful!")
+            show_admin_menu(user)
+            return
+        else:
+            print("Invalid username or password or not an admin. Please try again or type 'exit' to quit.")
+
 def show_menu(user):
     while True:
         print("\nMenu:")
@@ -113,21 +169,69 @@ def show_menu(user):
             case _:
                 print("Invalid choice. Please try again.")
 
+def show_admin_menu(user):
+    while True:
+        print("\nAdmin Menu:")
+        print("1) View All Users")
+        print("2) View All Posts")
+        print("3) Delete Post")
+        print("4) View Friend Requests")
+        print("5) Exit")
+
+        choice = input("Enter your choice: ")
+
+        match choice:
+            case '1':
+                view_all_users()
+            case '2':
+                view_all_posts()
+            case '3':
+                delete_post()
+            case '4':
+                view_friend_requests()
+            case '5':
+                print("Exiting...")
+                exit()
+            case _:
+                print("Invalid choice. Please try again.")
+
+def view_all_users():
+    users = User.get_all_users()
+    print("All users:")
+    for user in users:
+        print(f"ID: {user[0]}, Username: {user[6]}")
+
+def view_all_posts():
+    posts = User.get_all_posts()
+    print("All posts:")
+    for post in posts:
+        print(f"Post ID: {post[0]}, User ID: {post[1]}, Content: {post[2]}, Timestamp: {post[3]}")
+
+def delete_post():
+    post_id = int(input("Enter the post ID to delete: "))
+    if User.delete_post_by_id(post_id):
+        print("Post deleted successfully.")
+    else:
+        print("Post not found.")
+
+def view_friend_requests():
+    requests = User.get_all_friend_requests()
+    print("All friend requests:")
+    for request in requests:
+        print(f"User ID: {request[0]}, Friend ID: {request[1]}")
 
 def send_friend_request(user):
     print("Send Friend Request")
-    # Show a list of users in the same city
-    friends = user.get_friends()
-    print("Users with similar city:")
-    for friend in friends:
-        print(friend[0])
+    users = User.get_all_users()
+    print("List of all users:")
+    for user_tuple in users:
+        print(f"ID: {user_tuple[0]}, Username: {user_tuple[6]}")  # Assuming ID is at index 0 and username at index 6
 
     friend_username = input("Enter username to send friend request: ")
-    if user.send_friend_request(friend_username):
+    if User.send_friend_request(user.username, friend_username):
         print(f"Friend request sent to {friend_username}.")
     else:
         print(f"User {friend_username} not found or already a friend.")
-
 
 def send_message(user):
     print("Send Message")
@@ -137,16 +241,13 @@ def send_message(user):
     if user.send_message(receiver_username, message):
         print(f"Message sent to {receiver_username}.")
     else:
-        print(
-            f"Failed to send message. Make sure {receiver_username} is in your friend list and the username is correct.")
-
+        print(f"Failed to send message. Make sure {receiver_username} is in your friend list and the username is correct.")
 
 def create_post(user):
     print("Create New Post")
     content = input("Enter your post content: ")
     user.create_post(content)
     print("Post created successfully.")
-
 
 def view_posts_of_others(user):
     print("View Posts of Others")
@@ -165,7 +266,6 @@ def view_posts_of_others(user):
     else:
         print(f"User {friend_username} not found.")
 
-
 def view_previous_posts(user):
     print("View Previous Posts")
     posts = user.get_posts()
@@ -174,7 +274,6 @@ def view_previous_posts(user):
     else:
         for post in posts:
             print(f"ID: {post[0]}, Content: {post[1]}, Date: {post[2]}")
-
 
 def view_previous_messages(user):
     print("View Previous Messages")

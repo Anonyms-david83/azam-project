@@ -1,14 +1,11 @@
 import sqlite3
 
-# Database connection
-conn = sqlite3.connect('users.db')
-c = conn.cursor()
-
 def create_connection():
     return sqlite3.connect('users.db')
 
-# Create table for users
 def create_table():
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,7 +15,8 @@ def create_table():
             gender TEXT,
             city TEXT,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            role TEXT DEFAULT 'user'
         )
     ''')
     c.execute('''
@@ -50,60 +48,137 @@ def create_table():
         )
     ''')
     conn.commit()
+    conn.close()
+
+def add_role_column():
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute("PRAGMA table_info(users)")
+    columns = [column[1] for column in c.fetchall()]
+    if 'role' not in columns:
+        c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'")
+        conn.commit()
+    conn.close()
 
 def is_username_taken(username):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('SELECT username FROM users WHERE username=?', (username,))
-    return c.fetchone() is not None
+    result = c.fetchone()
+    conn.close()
+    return result is not None
 
-def save_user(first_name, last_name, birth_date, gender, city, username, password):
+def save_user(first_name, last_name, birth_date, gender, city, username, password, role):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('''
-        INSERT INTO users (first_name, last_name, birth_date, gender, city, username, password)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (first_name, last_name, birth_date, gender, city, username, password))
+        INSERT INTO users (first_name, last_name, birth_date, gender, city, username, password, role)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (first_name, last_name, birth_date, gender, city, username, password, role))
     conn.commit()
+    conn.close()
 
 def authenticate_user(username, password):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('SELECT * FROM users WHERE username=? AND password=?', (username, password))
-    return c.fetchone()
+    user_data = c.fetchone()
+    conn.close()
+    return user_data
 
 def get_user_by_username(username):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('SELECT * FROM users WHERE username=?', (username,))
-    return c.fetchone()
+    user_data = c.fetchone()
+    conn.close()
+    return user_data
 
 def add_friend(user_id, friend_id):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)', (user_id, friend_id))
     conn.commit()
+    conn.close()
 
 def get_friends(user_id):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('SELECT friend_id FROM friends WHERE user_id=?', (user_id,))
-    return c.fetchall()
+    friends = c.fetchall()
+    conn.close()
+    return friends
 
 def send_message(sender_id, receiver_id, content):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)', (sender_id, receiver_id, content))
     conn.commit()
+    conn.close()
 
-def get_messages(user_id):
-    c.execute('SELECT * FROM messages WHERE sender_id=? OR receiver_id=? ORDER BY timestamp', (user_id, user_id))
-    return c.fetchall()
+def get_received_messages(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM messages WHERE receiver_id=? ORDER BY timestamp', (user_id,))
+    messages = c.fetchall()
+    conn.close()
+    return messages
+
+def get_sent_messages(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM messages WHERE sender_id=? ORDER BY timestamp', (user_id,))
+    messages = c.fetchall()
+    conn.close()
+    return messages
 
 def create_post(user_id, content):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('INSERT INTO posts (user_id, content) VALUES (?, ?)', (user_id, content))
     conn.commit()
+    conn.close()
 
 def get_posts(user_id):
+    conn = create_connection()
+    c = conn.cursor()
     c.execute('SELECT * FROM posts WHERE user_id=? ORDER BY timestamp', (user_id,))
-    return c.fetchall()
+    posts = c.fetchall()
+    conn.close()
+    return posts
 
-def get_friend_posts(user_id):
-    c.execute('''
-        SELECT * FROM posts 
-        WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id=?)
-        ORDER BY timestamp
-    ''', (user_id,))
-    return c.fetchall()
+def get_all_users():
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users')
+    users = c.fetchall()
+    conn.close()
+    return users
 
-# Ensure the table is created when the module is imported
+def get_all_posts():
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM posts')
+    posts = c.fetchall()
+    conn.close()
+    return posts
 
+def delete_post(post_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM posts WHERE id=?', (post_id,))
+    conn.commit()
+    rowcount = c.rowcount
+    conn.close()
+    return rowcount > 0
+
+def get_all_friend_requests():
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT user_id, friend_id FROM friends')
+    requests = c.fetchall()
+    conn.close()
+    return requests
 
 def send_friend_request(user_id, friend_id):
     conn = create_connection()
@@ -112,5 +187,5 @@ def send_friend_request(user_id, friend_id):
     conn.commit()
     conn.close()
 
-
 create_table()
+add_role_column()

@@ -77,3 +77,19 @@ class User:
 
     def get_sent_messages(self):
         return database.get_sent_messages(self.id)
+
+    @classmethod
+    def get_all_users(cls):
+        return database.get_all_users()
+
+    @classmethod
+    def get_all_posts(cls):
+        return database.get_all_posts()
+
+    @classmethod
+    def delete_post_by_id(cls, post_id):
+        return database.delete_post(post_id)
+
+    @classmethod
+    def get_all_friend_requests(cls):
+        return database.get_all_friend_requests()
