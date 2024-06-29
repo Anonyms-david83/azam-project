@@ -242,10 +242,10 @@ def send_friend_request(user):
 def send_message(user):
     print("Send Message")
     recipient_username = input("Enter recipient's username: ")
-    recipient_user = User.get_user_by_username(recipient_username)
+    recipient_user = User.get_by_username(recipient_username)
     if recipient_user:
         message = input("Enter your message: ")
-        user.send_message(recipient_user[0], message)  # Assuming user ID is at index 0
+        user.send_message(recipient_user.id, message)  # Assuming user ID is stored in recipient_user.id
         print("Message sent!")
     else:
         print("User not found.")
