@@ -1,4 +1,10 @@
-from func import *
+import database
+from func import start_app
 
-if __name__ == '__main__' :
+def initialize_database():
+    database.create_table()
+    database.add_role_column()
+
+if __name__ == "__main__":
+    initialize_database()
     start_app()

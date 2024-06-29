@@ -47,6 +47,15 @@ def create_table():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS friend_requests (
+            user_id INTEGER,
+            friend_id INTEGER,
+            status TEXT DEFAULT 'pending',
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            FOREIGN KEY(friend_id) REFERENCES users(id)
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -93,6 +102,15 @@ def get_user_by_username(username):
     user_data = c.fetchone()
     conn.close()
     return user_data
+
+def get_user_by_id(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM users WHERE id=?', (user_id,))
+    result = c.fetchone()
+    conn.close()
+    return result
+
 
 def add_friend(user_id, friend_id):
     conn = create_connection()
@@ -175,7 +193,7 @@ def delete_post(post_id):
 def get_all_friend_requests():
     conn = create_connection()
     c = conn.cursor()
-    c.execute('SELECT user_id, friend_id FROM friends')
+    c.execute('SELECT user_id, friend_id FROM friend_requests')
     requests = c.fetchall()
     conn.close()
     return requests
@@ -183,9 +201,41 @@ def get_all_friend_requests():
 def send_friend_request(user_id, friend_id):
     conn = create_connection()
     c = conn.cursor()
+    c.execute('INSERT INTO friend_requests (user_id, friend_id) VALUES (?, ?)', (user_id, friend_id))
+    conn.commit()
+    conn.close()
+
+def get_incoming_friend_requests(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT user_id FROM friend_requests WHERE friend_id=? AND status="pending"', (user_id,))
+    requests = c.fetchall()
+    conn.close()
+    return requests
+
+def accept_friend_request(user_id, friend_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM friend_requests WHERE user_id=? AND friend_id=?', (friend_id, user_id))
     c.execute('INSERT INTO friends (user_id, friend_id) VALUES (?, ?)', (user_id, friend_id))
     conn.commit()
     conn.close()
+
+def decline_friend_request(user_id, friend_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM friend_requests WHERE user_id=? AND friend_id=?', (friend_id, user_id))
+    conn.commit()
+    conn.close()
+
+def get_accepted_friends(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT f.friend_id, u.username FROM friends f INNER JOIN users u ON f.friend_id = u.id WHERE f.user_id=?', (user_id,))
+    result = c.fetchall()
+    conn.close()
+    return result
+    
 
 create_table()
 add_role_column()

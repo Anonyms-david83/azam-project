@@ -47,6 +47,13 @@ class User:
             return cls(*user_data)
         return None
 
+    @classmethod
+    def get_by_id(cls, user_id):
+        user_data = database.get_user_by_id(user_id)
+        if user_data:
+            return cls(*user_data)
+        return None
+
     def send_friend_request(self, friend_username):
         friend = User.get_by_username(friend_username)
         if friend:
@@ -93,3 +100,16 @@ class User:
     @classmethod
     def get_all_friend_requests(cls):
         return database.get_all_friend_requests()
+
+    def get_pending_friend_requests(self):
+        return database.get_incoming_friend_requests(self.id)
+    
+    def accept_friend_request(self, friend_id):
+        database.accept_friend_request(self.id, friend_id)
+
+    def decline_friend_request(self, friend_id):
+        database.decline_friend_request(self.id, friend_id)
+
+    def get_accepted_friends(self):
+        friends_data = database.get_accepted_friends(self.id)
+        return friends_data

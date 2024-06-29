@@ -150,7 +150,9 @@ def show_menu(user):
         print("4) View Posts of Others")
         print("5) View Previous Messages")
         print("6) View Previous Posts")
-        print("7) Logout")
+        print("7) View Incoming Friend Requests")
+        print("8) View Friends list")
+        print("9) Logout")
 
         choice = input("Enter your choice: ")
 
@@ -168,11 +170,14 @@ def show_menu(user):
             case '6':
                 view_previous_posts(user)
             case '7':
+                view_incoming_friend_requests(user)
+            case '8' :
+                view_accepted_friends(user)    
+            case '9':
                 logout_user()
                 return
             case _:
                 print("Invalid choice. Please try again.")
-
 def show_admin_menu(user):
     while True:
         print("\nAdmin Menu:")
@@ -232,12 +237,13 @@ def send_friend_request(user):
         print(f"ID: {user_tuple[0]}, Username: {user_tuple[6]}")  # Assuming ID is at index 0 and username at index 6
 
     friend_username = input("Enter username to send friend request: ")
-    friend_user = User.get_user_by_username(friend_username)
+    friend_user = User.get_by_username(friend_username)
     if friend_user:
-        user.send_friend_request(friend_user[0])  # Assuming user ID is at index 0
+        user.send_friend_request(friend_user.username)  # Use the username directly
         print("Friend request sent!")
     else:
         print("User not found.")
+
 
 def send_message(user):
     print("Send Message")
@@ -273,3 +279,33 @@ def view_previous_posts(user):
     posts = user.get_posts()
     for post in posts:
         print(f"Content: {post[2]}, Timestamp: {post[3]}")
+
+def view_incoming_friend_requests(user):
+    print("Incoming Friend Requests")
+    requests = user.get_pending_friend_requests()
+    if not requests:
+        print("No incoming friend requests.")
+        return
+
+    for req in requests:
+        friend_user = User.get_by_id(req[0])  # Assuming user ID is at index 0
+        print(f"Friend request from: {friend_user.username}")
+        action = input("Accept (a) / Decline (d) / Skip (s): ").strip().lower()
+        if action == 'a':
+            user.accept_friend_request(friend_user.id)
+            print("Friend request accepted.")
+        elif action == 'd':
+            user.decline_friend_request(friend_user.id)
+            print("Friend request declined.")
+        else:
+            print("Friend request skipped.")
+
+def view_accepted_friends(user):
+    accepted_friends = user.get_accepted_friends()
+    if accepted_friends:
+        print("Accepted Friends:")
+        for friend_data in accepted_friends:
+            friend_id, username = friend_data
+            print(f"ID: {friend_id}, Username: {username}")
+    else:
+        print("You have no accepted friends yet.")
