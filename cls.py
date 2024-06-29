@@ -61,12 +61,12 @@ class User:
             return True
         return False
 
-    def send_message(self, receiver_username, message):
-        receiver = User.get_by_username(receiver_username)
-        if receiver:
-            database.send_message(self.id, receiver.id, message)
-            return True
-        return False
+    def send_message(self, friend_id, message):
+        success = database.send_message(self.id, friend_id, message)
+        if success:
+            print("Message sent successfully!")
+        else:
+            print("Failed to send message. You are not friends with this user.")
 
     def create_post(self, content):
         database.create_post(self.id, content)

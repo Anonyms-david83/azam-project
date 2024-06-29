@@ -246,13 +246,12 @@ def send_friend_request(user):
 
 
 def send_message(user):
-    print("Send Message")
-    recipient_username = input("Enter recipient's username: ")
-    recipient_user = User.get_by_username(recipient_username)
-    if recipient_user:
+    friend_username = input("Enter friend's username: ")
+    friend_user = User.get_by_username(friend_username)
+
+    if friend_user:
         message = input("Enter your message: ")
-        user.send_message(recipient_user.id, message)  # Assuming user ID is stored in recipient_user.id
-        print("Message sent!")
+        user.send_message(friend_user.id, message)
     else:
         print("User not found.")
 
@@ -270,7 +269,7 @@ def view_posts_of_others(user):
 
 def view_previous_messages(user):
     print("View Previous Messages")
-    messages = user.get_messages()
+    messages = user.get_received_messages()
     for message in messages:
         print(f"From: {message[1]}, To: {message[2]}, Content: {message[3]}, Timestamp: {message[4]}")
 

@@ -127,12 +127,22 @@ def get_friends(user_id):
     conn.close()
     return friends
 
-def send_message(sender_id, receiver_id, content):
+def send_message(sender_id, receiver_id, message):
     conn = create_connection()
     c = conn.cursor()
-    c.execute('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)', (sender_id, receiver_id, content))
-    conn.commit()
-    conn.close()
+    
+    c.execute('SELECT 1 FROM friends WHERE user_id=? AND friend_id=? UNION SELECT 1 FROM friends WHERE user_id=? AND friend_id=?', (sender_id, receiver_id, receiver_id, sender_id))
+    is_friends = c.fetchone()
+    
+    if is_friends:
+        c.execute('INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)', (sender_id, receiver_id, message))
+        conn.commit()
+        conn.close()
+        return True
+    else:
+        conn.close()
+        return False
+
 
 def get_received_messages(user_id):
     conn = create_connection()
