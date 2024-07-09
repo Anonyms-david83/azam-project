@@ -186,6 +186,14 @@ def show_admin_menu(user):
         print("3) Delete Post")
         print("4) View Friend Requests")
         print("5) Logout")
+        print("6) Send Friend Request")
+        print("7) Send Message")
+        print("8) Create New Post")
+        print("9) View Posts of Others")
+        print("10) View Previous Messages")
+        print("11) View Previous Posts")
+        print("12) View Incoming Friend Requests")
+        print("13) View Friends list")
 
         choice = input("Enter your choice: ")
 
@@ -201,6 +209,22 @@ def show_admin_menu(user):
             case '5':
                 logout_user()
                 return
+            case '6':
+                send_friend_request(user)
+            case '7':
+                send_message(user)
+            case '8':
+                create_post(user)    
+            case '9':
+                view_posts_of_others(user)
+            case '10':
+                view_previous_messages(user)
+            case '11':
+                view_previous_posts(user)
+            case '12':
+                view_incoming_friend_requests(user)
+            case '13':
+                view_accepted_friends(user)    
             case _:
                 print("Invalid choice. Please try again.")
 
@@ -239,7 +263,7 @@ def send_friend_request(user):
     friend_username = input("Enter username to send friend request: ")
     friend_user = User.get_by_username(friend_username)
     if friend_user:
-        user.send_friend_request(friend_user.username)  # Use the username directly
+        user.send_friend_request(friend_user.username)  #
         print("Friend request sent!")
     else:
         print("User not found.")
